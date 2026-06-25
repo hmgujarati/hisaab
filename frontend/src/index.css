@@ -90,6 +90,16 @@ code {
     padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
+/* Defensive overrides — hide Emergent platform branding badge if re-injected */
+#emergent-badge,
+a#emergent-badge,
+a[href*="emergent.sh"][id*="badge"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 /* Hide scrollbar but allow scroll */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
