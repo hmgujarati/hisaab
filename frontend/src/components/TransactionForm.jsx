@@ -132,13 +132,27 @@ export default function TransactionForm({ open, onClose, onSaved, projectId, def
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Project" cls="sm:col-span-2">
-              <Select value={form.project_id || "_none"} onValueChange={(v) => setForm({ ...form, project_id: v === "_none" ? "" : v })}>
-                <SelectTrigger data-testid="tx-project-select"><SelectValue placeholder="Select project" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_none">— Not linked —</SelectItem>
-                  {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.project_name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              {projectId ? (
+                <div
+                  data-testid="tx-project-locked"
+                  className="h-10 px-3 rounded-md border border-[#E2E0D8] bg-[#F5F4F0] text-sm text-[#1C2B2D] flex items-center justify-between"
+                >
+                  <span className="font-medium truncate">
+                    {projects.find((p) => p.id === projectId)?.project_name || "Current project"}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-widest text-[#5A6566] shrink-0 ml-2">
+                    Locked
+                  </span>
+                </div>
+              ) : (
+                <Select value={form.project_id || "_none"} onValueChange={(v) => setForm({ ...form, project_id: v === "_none" ? "" : v })}>
+                  <SelectTrigger data-testid="tx-project-select"><SelectValue placeholder="Select project" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">— Not linked —</SelectItem>
+                    {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.project_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
             </Field>
             <Field label="Party type">
               <Select value={form.party_kind} onValueChange={(v) => setForm({ ...form, party_kind: v, party_id: "" })}>
