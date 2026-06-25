@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Plus, Receipt, Wrench, ListChecks, Boxes, Folder, Bell, BarChart3, Camera, Trash2, ImageIcon,
+  ArrowLeft, Plus, Receipt, Wrench, ListChecks, Boxes, Folder, Bell, BarChart3, Camera, Trash2, ImageIcon, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import api, { formatApiError, FILE_BASE } from "@/lib/api";
@@ -35,6 +35,7 @@ const STATUS_COLORS = {
 
 export default function ProjectDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [tab, setTab] = useState("overview");
   const [txns, setTxns] = useState([]);
@@ -50,6 +51,8 @@ export default function ProjectDetail() {
   const [stageOpen, setStageOpen] = useState(false);
   const [materialOpen, setMaterialOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const loadProject = async () => {
     try {
@@ -110,6 +113,17 @@ export default function ProjectDetail() {
             </Button>
             <Button variant="outline" onClick={() => setStageOpen(true)} data-testid="update-stage-btn">
               <ListChecks size={14} className="mr-1.5" /> Update Stage
+            </Button>
+            <Button variant="outline" onClick={() => setEditOpen(true)} data-testid="edit-project-btn">
+              <Pencil size={14} className="mr-1.5" /> Edit
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteOpen(true)}
+              data-testid="delete-project-btn"
+              className="border-[#D04238]/30 text-[#D04238] hover:bg-[#D04238]/10 hover:text-[#D04238]"
+            >
+              <Trash2 size={14} className="mr-1.5" /> Delete
             </Button>
           </div>
         </div>
@@ -304,6 +318,18 @@ export default function ProjectDetail() {
         open={docOpen} onClose={() => setDocOpen(false)}
         onSaved={() => { setDocOpen(false); reload(); }}
         projectId={id}
+      />
+      <EditProjectDialog
+        open={editOpen}
+        project={project}
+        onClose={() => setEditOpen(false)}
+        onSaved={() => { setEditOpen(false); reload(); }}
+      />
+      <DeleteProjectDialog
+        open={deleteOpen}
+        project={project}
+        onClose={() => setDeleteOpen(false)}
+        onDeleted={() => { setDeleteOpen(false); navigate("/projects"); }}
       />
     </div>
   );
@@ -631,5 +657,185 @@ function DField({ label, req, cls = "", children }) {
       <Label className="text-sm">{label}{req && <span className="text-[#D04238]"> *</span>}</Label>
       <div className="mt-1.5">{children}</div>
     </div>
+  );
+}
+
+
+const WORK_TYPES = ["Interior", "Painting", "POP", "Furniture", "Civil", "Colour", "Other"];
+const PROJECT_STATUSES = ["Ongoing", "Hold", "Completed", "Cancelled"];
+
+function EditProjectDialog({ open, project, onClose, onSaved }) {
+  const [form, setForm] = useState(null);
+  const [clients, setClients] = useState([]);
+  const [refs, setRefs] = useState([]);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (open && project) {
+      setForm({
+        project_name: project.project_name || "",
+        client_id: project.client_id || project.client?.id || "",
+        reference_id: project.reference_id || project.reference?.id || "",
+        site_address: project.site_address || "",
+        work_type: project.work_type || "Interior",
+        status: project.status || "Ongoing",
+        original_value: project.original_value || 0,
+        start_date: (project.start_date || "").slice(0, 10),
+        expected_completion_date: (project.expected_completion_date || "").slice(0, 10),
+        notes: project.notes || "",
+      });
+      api.get("/clients").then(({ data }) => setClients(data));
+      api.get("/references").then(({ data }) => setRefs(data));
+    }
+  }, [open, project]);
+
+  if (!open || !form) return null;
+  const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      const payload = {
+        ...form,
+        original_value: Number(form.original_value) || 0,
+        client_id: form.client_id || null,
+        reference_id: form.reference_id || null,
+        expected_completion_date: form.expected_completion_date || null,
+        start_date: form.start_date || null,
+      };
+      await api.put(`/projects/${project.id}`, payload);
+      toast.success("Project updated");
+      onSaved();
+    } catch (e) {
+      toast.error(formatApiError(e.response?.data?.detail));
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Edit Project</DialogTitle>
+          <DialogDescription>Update project details. Changes apply immediately.</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <DField label="Project name" req cls="sm:col-span-2">
+            <Input data-testid="edit-project-name-input" value={form.project_name} onChange={(e) => update("project_name", e.target.value)} />
+          </DField>
+          <DField label="Client">
+            <Select value={form.client_id || "_none"} onValueChange={(v) => update("client_id", v === "_none" ? "" : v)}>
+              <SelectTrigger data-testid="edit-project-client-select"><SelectValue placeholder="Select client" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none">— None —</SelectItem>
+                {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </DField>
+          <DField label="Work type">
+            <Select value={form.work_type} onValueChange={(v) => update("work_type", v)}>
+              <SelectTrigger data-testid="edit-project-worktype-select"><SelectValue /></SelectTrigger>
+              <SelectContent>{WORK_TYPES.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
+            </Select>
+          </DField>
+          <DField label="Status">
+            <Select value={form.status} onValueChange={(v) => update("status", v)}>
+              <SelectTrigger data-testid="edit-project-status-select"><SelectValue /></SelectTrigger>
+              <SelectContent>{PROJECT_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </DField>
+          <DField label="Reference / Given by">
+            <Select value={form.reference_id || "_none"} onValueChange={(v) => update("reference_id", v === "_none" ? "" : v)}>
+              <SelectTrigger data-testid="edit-project-ref-select"><SelectValue placeholder="Select reference" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none">— Direct —</SelectItem>
+                {refs.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </DField>
+          <DField label="Site address" cls="sm:col-span-2">
+            <Input data-testid="edit-project-site-input" value={form.site_address} onChange={(e) => update("site_address", e.target.value)} />
+          </DField>
+          <DField label="Original value (₹)">
+            <Input data-testid="edit-project-value-input" type="number" value={form.original_value} onChange={(e) => update("original_value", e.target.value)} />
+          </DField>
+          <DField label="Start date">
+            <Input data-testid="edit-project-start-input" type="date" value={form.start_date || ""} onChange={(e) => update("start_date", e.target.value)} />
+          </DField>
+          <DField label="Expected completion">
+            <Input data-testid="edit-project-end-input" type="date" value={form.expected_completion_date || ""} onChange={(e) => update("expected_completion_date", e.target.value)} />
+          </DField>
+          <DField label="Notes" cls="sm:col-span-2">
+            <Textarea data-testid="edit-project-notes-input" value={form.notes} onChange={(e) => update("notes", e.target.value)} rows={2} />
+          </DField>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            data-testid="edit-project-save-btn"
+            disabled={busy || !form.project_name}
+            onClick={submit}
+            className="bg-[#2B4C3B] hover:bg-[#1F382A]"
+          >
+            {busy ? "Saving…" : "Save changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DeleteProjectDialog({ open, project, onClose, onDeleted }) {
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (open) setConfirm(""); }, [open]);
+  if (!open || !project) return null;
+  const canDelete = confirm.trim().toLowerCase() === project.project_name.toLowerCase();
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      await api.delete(`/projects/${project.id}`);
+      toast.success(`${project.project_name} deleted`);
+      onDeleted();
+    } catch (e) {
+      toast.error(formatApiError(e.response?.data?.detail));
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-[#D04238] flex items-center gap-2">
+            <Trash2 size={18} /> Delete project
+          </DialogTitle>
+          <DialogDescription>
+            This permanently deletes <span className="font-semibold text-[#1C2B2D]">{project.project_name}</span>. Linked transactions, extra work, materials, documents and stage history will be orphaned (not auto-deleted). This cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="bg-[#D04238]/5 border border-[#D04238]/20 rounded-lg p-3 text-sm text-[#1C2B2D]">
+          Type the project name <span className="font-semibold">{project.project_name}</span> to confirm:
+          <Input
+            data-testid="delete-project-confirm-input"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            className="mt-2 bg-white"
+            placeholder={project.project_name}
+            autoFocus
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            data-testid="delete-project-confirm-btn"
+            disabled={busy || !canDelete}
+            onClick={submit}
+            className="bg-[#D04238] hover:bg-[#B03830] text-white disabled:opacity-50"
+          >
+            {busy ? "Deleting…" : "Delete permanently"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
