@@ -452,3 +452,80 @@ class TestPasswordReset:
     def test_forgot_for_existing_user_returns_200(self):
         r = requests.post(f"{API}/auth/forgot-password", json={"identifier": ADMIN_EMAIL})
         assert r.status_code == 200
+
+
+# ---------- Change password (logged-in flow) ----------
+class TestChangePassword:
+    def test_unauthenticated_rejected(self):
+        r = requests.post(f"{API}/auth/change-password",
+                          json={"current_password": "x", "new_password": "xxxxxx"})
+        assert r.status_code == 401
+
+    def test_wrong_current_password_400(self, admin_session):
+        biz, payload = _create_biz(admin_session, "CPW")
+        sess = requests.Session()
+        lr = sess.post(f"{API}/auth/login", json={"identifier": payload["email"], "password": payload["password"]})
+        assert lr.status_code == 200
+        r = sess.post(f"{API}/auth/change-password",
+                      json={"current_password": "wrong-current", "new_password": "NewPass@456"})
+        assert r.status_code == 400
+        assert "current password is incorrect" in r.text.lower()
+
+    def test_new_password_too_short_400(self, admin_session):
+        biz, payload = _create_biz(admin_session, "CPSHORT")
+        sess = requests.Session()
+        sess.post(f"{API}/auth/login", json={"identifier": payload["email"], "password": payload["password"]})
+        r = sess.post(f"{API}/auth/change-password",
+                      json={"current_password": payload["password"], "new_password": "abc"})
+        assert r.status_code == 400
+
+    def test_new_same_as_current_400(self, admin_session):
+        biz, payload = _create_biz(admin_session, "CPSAME")
+        sess = requests.Session()
+        sess.post(f"{API}/auth/login", json={"identifier": payload["email"], "password": payload["password"]})
+        r = sess.post(f"{API}/auth/change-password",
+                      json={"current_password": payload["password"], "new_password": payload["password"]})
+        assert r.status_code == 400
+
+    def test_owner_change_password_success_then_relogin(self, admin_session):
+        biz, payload = _create_biz(admin_session, "CPOK")
+        sess = requests.Session()
+        sess.post(f"{API}/auth/login", json={"identifier": payload["email"], "password": payload["password"]})
+        new_pw = "Brand@New123"
+        r = sess.post(f"{API}/auth/change-password",
+                      json={"current_password": payload["password"], "new_password": new_pw})
+        assert r.status_code == 200
+        assert r.json().get("ok") is True
+        # Session still valid (no forced logout)
+        me = sess.get(f"{API}/auth/me")
+        assert me.status_code == 200
+        # Old password rejected
+        old_login = requests.post(f"{API}/auth/login",
+                                  json={"identifier": payload["email"], "password": payload["password"]})
+        assert old_login.status_code == 401
+        # New password works
+        new_login = requests.post(f"{API}/auth/login",
+                                  json={"identifier": payload["email"], "password": new_pw})
+        assert new_login.status_code == 200
+
+    def test_super_admin_change_password_and_restore(self):
+        """Super admin can change own password. Restore after to keep seed creds valid."""
+        sess = requests.Session()
+        lr = sess.post(f"{API}/auth/login", json={"identifier": ADMIN_EMAIL, "password": ADMIN_PASS})
+        assert lr.status_code == 200
+        tmp_pw = "TmpAdmin@999"
+        try:
+            r = sess.post(f"{API}/auth/change-password",
+                          json={"current_password": ADMIN_PASS, "new_password": tmp_pw})
+            assert r.status_code == 200
+            # New pw works
+            lr2 = requests.post(f"{API}/auth/login", json={"identifier": ADMIN_EMAIL, "password": tmp_pw})
+            assert lr2.status_code == 200
+        finally:
+            # Restore original to not break other suites / seed flow
+            sess_after = requests.Session()
+            lr3 = sess_after.post(f"{API}/auth/login", json={"identifier": ADMIN_EMAIL, "password": tmp_pw})
+            if lr3.status_code == 200:
+                rr = sess_after.post(f"{API}/auth/change-password",
+                                     json={"current_password": tmp_pw, "new_password": ADMIN_PASS})
+                assert rr.status_code == 200

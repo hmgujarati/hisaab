@@ -1,0 +1,24 @@
+{
+  "summary": "Iteration 3 — personalized dashboard greeting + change-password feature. Backend: 36/36 PASS (6 new TestChangePassword cases + 30 prior regression). Frontend: 12/12 PASS — greeting shows 'Good morning, Raj' (no literal 'owner'), settings card shows email, dialog disabled-states for empty/short/mismatched inputs all correct, wrong-current toast 'Current password is incorrect', success toast 'Password updated successfully', dialog auto-closes, user remains logged in (GET /api/auth/me = 200), logout → old pw rejected at login ('Invalid credentials' visible), new pw logs in and greeting persists. Super-admin self-change also works (verified via API).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Dashboard.jsx firstName() fallback to email local-part is correct; however, name field is required at owner creation (admin form), so the email fallback path is essentially dead code in production. Acceptable but worth a unit-style comment.",
+    "ChangePasswordDialog.jsx clears form on open via useEffect — good. But it does not auto-focus on dialog re-open in some browsers because the Input is already mounted; minor UX nit.",
+    "server.py change_password() validates new>=6 BEFORE verifying current password; this means an unauthenticated-but-invalid-payload caller would still hit the 401 first (good), but an authenticated user with wrong current AND short new gets the 'too short' error instead of 'current incorrect'. Order is fine but consider returning current-incorrect first to avoid leaking policy info before auth-step success (very minor).",
+    "Consider rate-limiting /api/auth/change-password (brute force on current_password). Not currently enforced."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (36/36)", "frontend": "100% (12/12 scripted assertions)"},
+  "test_credentials": "Super admin: admin@rapidxt.com / Admin@123 (restored after self-change test). Test owner created at runtime: raj_<ts>@patelinteriors.com / Owner@123 then password rotated to Brand@New123.",
+  "seed_data_creation": "Test run created businesses TEST_Biz_A/B/PWRESET/PWPRESET/CPW/CPSHORT/CPSAME/CPOK + Patel Interiors <ts> with owner Raj Patel. These remain (no admin-delete cleanup hook in test file). Recommend periodic cleanup of TEST_* businesses.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend endpoint POST /api/auth/change-password is fully covered (TestChangePassword class). Frontend selectors confirmed working: dashboard-greeting, open-change-password-btn, cp-current-input, cp-new-input, cp-confirm-input, cp-save-btn. Success toast text 'Password updated successfully'; error toast text contains 'Current password is incorrect' and 'don\\'t match'. Login error literal: 'Invalid credentials'. To regenerate ad-hoc owner credentials, hit /api/admin/businesses with admin cookies.",
+  "rca of the issue": "Not applicable — feature build, no bugs surfaced. Both reported user concerns (literal 'owner' in greeting, missing change-password option) are fully resolved."
+}

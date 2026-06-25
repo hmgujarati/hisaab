@@ -20,7 +20,7 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from models import (
-    LoginIn, ForgotPasswordIn, ResetPasswordIn,
+    LoginIn, ForgotPasswordIn, ResetPasswordIn, ChangePasswordIn,
     BusinessCreate, BusinessUpdate, ExtendExpiryIn, StatusChangeIn, AdminResetPasswordIn,
     SmtpSettingsIn, new_id,
 )
@@ -262,6 +262,24 @@ async def reset_password(body: ResetPasswordIn):
     )
     await db.password_reset_tokens.update_one({"_id": rec["_id"]}, {"$set": {"used": True}})
     return {"ok": True}
+
+
+@api.post("/auth/change-password")
+async def change_password(body: ChangePasswordIn, user: dict = Depends(get_current_user)):
+    """Logged-in users change their own password (verifies current first)."""
+    if len(body.new_password) < 6:
+        raise HTTPException(400, "New password must be at least 6 characters")
+    fresh = await db.users.find_one({"_id": user["_id"]})
+    if not fresh or not verify_password(body.current_password, fresh["password_hash"]):
+        raise HTTPException(400, "Current password is incorrect")
+    if verify_password(body.new_password, fresh["password_hash"]):
+        raise HTTPException(400, "New password must be different from current password")
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password_hash": hash_password(body.new_password)}}
+    )
+    return {"ok": True}
+
 
 
 # ---------- SUPER ADMIN ----------

@@ -25,6 +25,11 @@ class ResetPasswordIn(BaseModel):
     new_password: str
 
 
+class ChangePasswordIn(BaseModel):
+    current_password: str
+    new_password: str
+
+
 # ---------- Businesses ----------
 class BusinessCreate(BaseModel):
     business_name: str

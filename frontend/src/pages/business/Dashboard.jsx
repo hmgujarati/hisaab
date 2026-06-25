@@ -4,10 +4,12 @@ import {
   TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Bell, AlertCircle, Plus, Briefcase, Wallet, Receipt,
 } from "lucide-react";
 import api from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { formatINR, formatDate, currentFY } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,8 +35,8 @@ export default function Dashboard() {
     <div className="space-y-6 lg:space-y-8">
       <div>
         <div className="text-xs uppercase tracking-widest text-[#5A6566]">Dashboard</div>
-        <h1 className="font-display text-3xl sm:text-4xl font-semibold mt-1">
-          {greeting()}, owner
+        <h1 className="font-display text-3xl sm:text-4xl font-semibold mt-1" data-testid="dashboard-greeting">
+          {greeting()}, {firstName(user) || "there"}
         </h1>
         <p className="text-[#5A6566] mt-1">
           Yahaan dekho — paisa aaya kitna, gaya kitna, pending kitna, profit kitna.
@@ -154,6 +156,14 @@ function greeting() {
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
+}
+
+function firstName(user) {
+  if (!user) return "";
+  const full = (user.name || "").trim();
+  if (full) return full.split(/\s+/)[0];
+  if (user.email) return user.email.split("@")[0];
+  return "";
 }
 
 function BigMetric({ tone, label, value, sub, icon: Icon }) {

@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Trash2, ChevronUp, ChevronDown, ListChecks } from "lucide-react";
+import { Plus, Trash2, ChevronUp, ChevronDown, ListChecks, Lock, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import api, { formatApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import InstallPWAButton from "@/components/InstallPWAButton";
 
 export default function SettingsPage() {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [newName, setNewName] = useState("");
+  const [pwdOpen, setPwdOpen] = useState(false);
 
   const load = async () => {
     const { data } = await api.get("/stages-master");
@@ -59,6 +66,25 @@ export default function SettingsPage() {
       </div>
 
       <InstallPWAButton variant="card" />
+
+      <button
+        data-testid="open-change-password-btn"
+        onClick={() => setPwdOpen(true)}
+        className="w-full text-left rxt-card p-5 rxt-hover-lift flex items-start gap-3"
+      >
+        <div className="h-11 w-11 rounded-xl bg-[#D96C4A]/10 text-[#D96C4A] grid place-items-center shrink-0">
+          <KeyRound size={20} />
+        </div>
+        <div className="flex-1">
+          <div className="font-display font-semibold text-base">Change password</div>
+          <p className="text-sm text-[#5A6566] mt-1">
+            Update the password for {user?.email || "your account"}.
+          </p>
+        </div>
+        <Lock size={16} className="text-[#5A6566] mt-1.5" />
+      </button>
+
+      <ChangePasswordDialog open={pwdOpen} onClose={() => setPwdOpen(false)} />
 
       <div>
         <h2 className="font-display text-xl font-semibold">Project Stages</h2>
@@ -112,6 +138,99 @@ function StageRow({ stage, idx, total, onMoveUp, onMoveDown, onToggle, onDelete,
         {stage.active ? "Active" : "Inactive"}
       </button>
       <button data-testid={`stage-delete-${stage.id}`} onClick={onDelete} className="p-1 text-[#D04238]/70 hover:text-[#D04238]"><Trash2 size={14} /></button>
+    </div>
+  );
+}
+
+
+function ChangePasswordDialog({ open, onClose }) {
+  const [form, setForm] = useState({ current: "", next: "", confirm: "" });
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => { if (open) setForm({ current: "", next: "", confirm: "" }); }, [open]);
+
+  const submit = async () => {
+    if (form.next.length < 6) {
+      toast.error("New password must be at least 6 characters");
+      return;
+    }
+    if (form.next !== form.confirm) {
+      toast.error("New password and confirmation don't match");
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.post("/auth/change-password", {
+        current_password: form.current,
+        new_password: form.next,
+      });
+      toast.success("Password updated successfully");
+      onClose();
+    } catch (e) {
+      toast.error(formatApiError(e.response?.data?.detail));
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <KeyRound size={18} /> Change password
+          </DialogTitle>
+          <DialogDescription>
+            Enter your current password, then set a new one (minimum 6 characters).
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <F label="Current password" req>
+            <Input
+              data-testid="cp-current-input"
+              type="password"
+              value={form.current}
+              onChange={(e) => setForm({ ...form, current: e.target.value })}
+              autoFocus
+            />
+          </F>
+          <F label="New password" req>
+            <Input
+              data-testid="cp-new-input"
+              type="password"
+              value={form.next}
+              onChange={(e) => setForm({ ...form, next: e.target.value })}
+              placeholder="Min 6 characters"
+            />
+          </F>
+          <F label="Confirm new password" req>
+            <Input
+              data-testid="cp-confirm-input"
+              type="password"
+              value={form.confirm}
+              onChange={(e) => setForm({ ...form, confirm: e.target.value })}
+            />
+          </F>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            data-testid="cp-save-btn"
+            disabled={busy || !form.current || form.next.length < 6 || form.next !== form.confirm}
+            onClick={submit}
+            className="bg-[#2B4C3B] hover:bg-[#1F382A]"
+          >
+            {busy ? "Updating…" : "Update password"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function F({ label, req, children }) {
+  return (
+    <div>
+      <Label className="text-sm">{label}{req && <span className="text-[#D04238]"> *</span>}</Label>
+      <div className="mt-1.5">{children}</div>
     </div>
   );
 }
