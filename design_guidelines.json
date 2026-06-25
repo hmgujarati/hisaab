@@ -1,0 +1,116 @@
+{
+  "theme": "light",
+  "archetype": "1 (Organic & Earthy)",
+  "typography": {
+    "headings": {
+      "fontFamily": "Outfit, sans-serif",
+      "weights": ["400", "500", "600"],
+      "tracking": "tracking-tight"
+    },
+    "body": {
+      "fontFamily": "Inter, sans-serif",
+      "weights": ["400", "500"]
+    },
+    "scale": {
+      "h1": "text-3xl sm:text-4xl",
+      "h2": "text-2xl sm:text-3xl",
+      "h3": "text-xl sm:text-2xl",
+      "body": "text-base",
+      "small": "text-sm",
+      "tiny": "text-xs uppercase tracking-widest"
+    }
+  },
+  "colors": {
+    "background": "#F5F4F0",
+    "surface": "#FFFFFF",
+    "primary": "#2B4C3B",
+    "primary_hover": "#1F382A",
+    "secondary": "#D96C4A",
+    "text_primary": "#1C2B2D",
+    "text_secondary": "#5A6566",
+    "border": "#E2E0D8",
+    "success": "#3A7D44",
+    "warning": "#F5A623",
+    "danger": "#D04238"
+  },
+  "spacing_and_layout": {
+    "philosophy": "Generous Spacing, Mobile-First PWA, Bottom Nav for quick actions on mobile.",
+    "container_padding": "p-4 sm:p-6 lg:p-8",
+    "grid_system": {
+      "dashboard": "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
+      "projects": "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    },
+    "surface_styles": {
+      "cards": "bg-white border border-[#E2E0D8] rounded-xl shadow-sm p-4 sm:p-6",
+      "glass": "backdrop-blur-xl bg-white/80 border-b border-[#E2E0D8]"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#2B4C3B] text-white hover:bg-[#1F382A] rounded-lg transition-colors",
+      "secondary": "bg-transparent border border-[#2B4C3B] text-[#2B4C3B] hover:bg-[#F5F4F0]",
+      "floating_action": "fixed bottom-6 right-6 h-14 w-14 rounded-full bg-[#2B4C3B] text-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
+    },
+    "inputs": {
+      "style": "bg-transparent border border-[#E2E0D8] rounded-lg focus:ring-2 focus:ring-[#2B4C3B]/20 focus:border-[#2B4C3B] transition-all px-4 py-2"
+    },
+    "badges": {
+      "active": "bg-[#3A7D44]/10 text-[#3A7D44] border border-[#3A7D44]/20 rounded-full px-3 py-1 text-xs font-medium",
+      "pending": "bg-[#F5A623]/10 text-[#F5A623] border border-[#F5A623]/20 rounded-full px-3 py-1 text-xs font-medium",
+      "suspended": "bg-[#D04238]/10 text-[#D04238] border border-[#D04238]/20 rounded-full px-3 py-1 text-xs font-medium"
+    }
+  },
+  "motion_and_interactions": {
+    "hover": "transition-transform hover:-translate-y-1 hover:shadow-md duration-200",
+    "page_transition": "animate-in fade-in slide-in-from-bottom-4 duration-300",
+    "active_state": "active:scale-95 transition-transform duration-100"
+  },
+  "icons_and_assets": {
+    "icon_library": "lucide-react",
+    "icon_style": "stroke-width: 1.5, simple, uncluttered"
+  },
+  "specific_pages": {
+    "login": {
+      "layout": "Centered card on #F5F4F0 background. Left side visual (if desktop), full screen mobile.",
+      "features": "Mobile/Email input, OTP/Password, clear PWA install prompt if supported."
+    },
+    "business_dashboard": {
+      "top_section": "North Star Metrics: Total Received, Total Pending. Large typography for ₹ amounts.",
+      "quick_actions": "Horizontal scrollable list of circular/rounded-rect quick action buttons (Add Payment, Add Expense, Scan Bill).",
+      "recent_activity": "Vertical list of recent transactions with clear red/green color coding for money in/out."
+    },
+    "projects_detail": {
+      "tabs": "Scrollable horizontal tabs for Overview, Transactions, Extra Work, Stages, Materials, Docs, Reminders.",
+      "layout": "Sticky header with project name and status. Content scrolls below."
+    },
+    "bill_scanner": {
+      "ui": "Camera view overlay, bottom sheet for crop/enhance/compress actions."
+    }
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure all text meets WCAG AA standards.",
+    "testing_attributes": "All interactive elements MUST have data-testid attributes (e.g., data-testid='login-submit', data-testid='add-project-btn')."
+  },
+  "image_urls": [
+    {
+      "url": "https://images.unsplash.com/photo-1542621334-a254cf47733d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzl8MHwxfHNlYXJjaHwxfHxpbnRlcmlvciUyMGRlc2lnbiUyMGJsdWVwcmludHMlMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzgyMzU5NTM5fDA&ixlib=rb-4.1.0&q=85",
+      "category": "login_background",
+      "description": "brown pencil on white printing paper, perfect for subtle interior design background"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1721244654392-9c912a6eb236?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzl8MHwxfHNlYXJjaHwyfHxpbnRlcmlvciUyMGRlc2lnbiUyMGJsdWVwcmludHMlMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzgyMzU5NTM5fDA&ixlib=rb-4.1.0&q=85",
+      "category": "empty_state",
+      "description": "A blueprint of a building with a bunch of windows for empty state screens"
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Use standard Tailwind classes matching the organic & earthy color palette.",
+    "Format currency using Indian numbering system (e.g. ₹1,25,000) using Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).",
+    "Prioritize mobile layout (p-4, vertical stacks). On desktop, expand into a 2/3 column bento grid.",
+    "Use pure HTML+Tailwind for main layouts and Shadcn for functional components (Dialogs, Tabs, Forms).",
+    "Implement a sticky bottom navigation bar for mobile with quick access to Home, Projects, Scan Bill, Reminders, Profile.",
+    "Never use generic blue. Stick to the #2B4C3B (Deep Forest Green) and #D96C4A (Terracotta) accents.",
+    "All cards must have a 1px border (#E2E0D8) and soft shadow.",
+    "Ensure 'data-testid' is added to every button, input, and interactive tab."
+  ]
+}
