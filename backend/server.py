@@ -390,6 +390,26 @@ async def admin_reset_password(biz_id: str, body: AdminResetPasswordIn, _: dict 
     return {"ok": True}
 
 
+@api.delete("/admin/businesses/{biz_id}")
+async def delete_business(biz_id: str, _: dict = Depends(require_super_admin)):
+    """Hard-delete a business + its users + all child data."""
+    b = await db.businesses.find_one({"_id": biz_id})
+    if not b:
+        raise HTTPException(404, "Business not found")
+
+    # Cascade delete all business-scoped data
+    collections = [
+        "users", "projects", "clients", "parties", "refs",
+        "transactions", "extra_work", "materials", "documents",
+        "reminders", "stages_master", "stage_history",
+    ]
+    for coll in collections:
+        await db[coll].delete_many({"business_id": biz_id})
+
+    await db.businesses.delete_one({"_id": biz_id})
+    return {"ok": True, "deleted": biz_id}
+
+
 # SMTP
 @api.get("/admin/smtp")
 async def get_smtp(_: dict = Depends(require_super_admin)):

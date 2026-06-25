@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
-  Plus, Pencil, CalendarClock, Power, KeyRound, LogOut, Mail, Search, ShieldCheck,
+  Plus, Pencil, CalendarClock, Power, KeyRound, LogOut, Mail, Search, ShieldCheck, Trash2,
 } from "lucide-react";
 import api, { formatApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -35,6 +35,7 @@ export default function AdminPanel() {
   const [editing, setEditing] = useState(null);
   const [extending, setExtending] = useState(null);
   const [resetting, setResetting] = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -192,6 +193,14 @@ export default function AdminPanel() {
                           <IconBtn title="Reset Password" onClick={() => setResetting(b)} data-testid={`reset-pwd-${b.id}`}>
                             <KeyRound size={14} />
                           </IconBtn>
+                          <IconBtn
+                            title="Delete"
+                            onClick={() => setDeleting(b)}
+                            data-testid={`delete-biz-${b.id}`}
+                            danger
+                          >
+                            <Trash2 size={14} />
+                          </IconBtn>
                         </div>
                       </td>
                     </tr>
@@ -219,15 +228,24 @@ export default function AdminPanel() {
         onClose={() => setResetting(null)}
         onSaved={() => setResetting(null)}
       />
+      <DeleteBusinessDlg
+        biz={deleting}
+        onClose={() => setDeleting(null)}
+        onDeleted={() => { setDeleting(null); load(); }}
+      />
     </div>
   );
 }
 
-function IconBtn({ children, title, ...rest }) {
+function IconBtn({ children, title, danger, ...rest }) {
   return (
     <button
       title={title}
-      className="h-8 w-8 grid place-items-center rounded-lg text-[#5A6566] hover:bg-[#E2E0D8]/60 hover:text-[#1C2B2D] transition-colors"
+      className={`h-8 w-8 grid place-items-center rounded-lg transition-colors ${
+        danger
+          ? "text-[#D04238]/70 hover:bg-[#D04238]/10 hover:text-[#D04238]"
+          : "text-[#5A6566] hover:bg-[#E2E0D8]/60 hover:text-[#1C2B2D]"
+      }`}
       {...rest}
     >
       {children}
@@ -413,5 +431,61 @@ function Field({ label, required, className = "", children }) {
       </Label>
       <div className="mt-1.5">{children}</div>
     </div>
+  );
+}
+
+function DeleteBusinessDlg({ biz, onClose, onDeleted }) {
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setConfirm(""); }, [biz]);
+  if (!biz) return null;
+  const canDelete = confirm.trim().toLowerCase() === biz.business_name.toLowerCase();
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      await api.delete(`/admin/businesses/${biz.id}`);
+      toast.success(`${biz.business_name} deleted`);
+      onDeleted();
+    } catch (e) {
+      toast.error(formatApiError(e.response?.data?.detail));
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Dialog open={!!biz} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-[#D04238] flex items-center gap-2">
+            <Trash2 size={18} /> Delete business
+          </DialogTitle>
+          <DialogDescription>
+            This will permanently delete <span className="font-semibold text-[#1C2B2D]">{biz.business_name}</span> ({biz.owner_name}) and ALL of its data — projects, clients, suppliers, transactions, materials, documents, reminders & stages. This cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="bg-[#D04238]/5 border border-[#D04238]/20 rounded-lg p-3 text-sm text-[#1C2B2D]">
+          Type the business name <span className="font-semibold">{biz.business_name}</span> to confirm:
+          <Input
+            data-testid="delete-confirm-input"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            className="mt-2 bg-white"
+            placeholder={biz.business_name}
+            autoFocus
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            data-testid="delete-confirm-btn"
+            disabled={busy || !canDelete}
+            onClick={submit}
+            className="bg-[#D04238] hover:bg-[#B03830] text-white disabled:opacity-50"
+          >
+            {busy ? "Deleting…" : "Delete permanently"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
