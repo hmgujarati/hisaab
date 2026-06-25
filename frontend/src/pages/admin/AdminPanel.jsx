@@ -10,6 +10,7 @@ import { formatDate, daysFromNow } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import InstallPWAButton from "@/components/InstallPWAButton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
@@ -86,6 +87,7 @@ export default function AdminPanel() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <InstallPWAButton />
             <Link to="/admin/smtp">
               <Button variant="outline" size="sm" data-testid="open-smtp-btn">
                 <Mail size={14} className="mr-1.5" /> SMTP Settings

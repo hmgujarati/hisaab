@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import api, { formatApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import InstallPWAButton from "@/components/InstallPWAButton";
 
 export default function SettingsPage() {
   const [items, setItems] = useState([]);
@@ -53,8 +54,15 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <div className="text-xs uppercase tracking-widest text-[#5A6566]">Customize</div>
-        <h1 className="font-display text-3xl sm:text-4xl font-semibold mt-1">Project Stages</h1>
-        <p className="text-[#5A6566] mt-1">Create your own stages. Reorder by moving up/down. Inactive stages won&apos;t appear when updating a project.</p>
+        <h1 className="font-display text-3xl sm:text-4xl font-semibold mt-1">Settings</h1>
+        <p className="text-[#5A6566] mt-1">App install and project stages master.</p>
+      </div>
+
+      <InstallPWAButton variant="card" />
+
+      <div>
+        <h2 className="font-display text-xl font-semibold">Project Stages</h2>
+        <p className="text-[#5A6566] mt-1 text-sm">Create your own stages. Reorder by moving up/down. Inactive stages won&apos;t appear when updating a project.</p>
       </div>
 
       <div className="rxt-card p-5">

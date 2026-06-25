@@ -17,6 +17,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import QuickActionSheet from "@/components/QuickActionSheet";
+import InstallPWAButton from "@/components/InstallPWAButton";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -84,6 +85,7 @@ export default function Layout() {
                 Plan expired
               </span>
             )}
+            <InstallPWAButton />
             <Button
               variant="ghost"
               size="sm"
