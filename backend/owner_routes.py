@@ -346,6 +346,11 @@ def build_owner_router(db, get_active_business, require_active_business, require
 
     @r.post("/projects")
     async def create_project(body: ProjectCreate, biz: dict = Depends(require_active_business)):
+        if not body.client_id:
+            raise HTTPException(400, "Client is required for a project")
+        client = await db.clients.find_one({"_id": body.client_id, "business_id": biz["_id"]})
+        if not client:
+            raise HTTPException(400, "Selected client not found")
         doc = {"_id": new_id(), "business_id": biz["_id"], "created_at": now_iso(), **body.model_dump()}
         await db.projects.insert_one(doc)
         return _strip_id(doc)

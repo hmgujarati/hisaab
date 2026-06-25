@@ -77,7 +77,7 @@ ProjectStatus = Literal["Ongoing", "Hold", "Completed", "Cancelled"]
 
 class ProjectCreate(BaseModel):
     project_name: str
-    client_id: Optional[str] = None
+    client_id: str
     site_address: Optional[str] = ""
     work_type: WorkType = "Interior"
     reference_id: Optional[str] = None

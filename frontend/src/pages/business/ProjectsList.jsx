@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, Briefcase, MapPin } from "lucide-react";
+import { Plus, Search, Briefcase, MapPin, UserPlus, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import api, { formatApiError } from "@/lib/api";
 import { formatINR, formatDate } from "@/lib/format";
@@ -166,10 +166,13 @@ function AddProjectDialog({ open, onClose, onSaved }) {
   }, [open]);
 
   const submit = async () => {
+    if (!form.client_id) {
+      toast.error("Please select a client");
+      return;
+    }
     setBusy(true);
     try {
       const payload = { ...form, original_value: Number(form.original_value) || 0 };
-      if (!payload.client_id) delete payload.client_id;
       if (!payload.reference_id) delete payload.reference_id;
       if (!payload.expected_completion_date) delete payload.expected_completion_date;
       await api.post("/projects", payload);
@@ -193,14 +196,30 @@ function AddProjectDialog({ open, onClose, onSaved }) {
           <Field label="Project name" required className="sm:col-span-2">
             <Input data-testid="add-project-name-input" value={form.project_name} onChange={(e) => update("project_name", e.target.value)} />
           </Field>
-          <Field label="Client">
-            <Select value={form.client_id || "_none"} onValueChange={(v) => update("client_id", v === "_none" ? "" : v)}>
-              <SelectTrigger data-testid="add-project-client-select"><SelectValue placeholder="Select client (optional)" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_none">— None —</SelectItem>
-                {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <Field label="Client" required>
+            {clients.length === 0 ? (
+              <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/10 px-3 py-2.5 text-xs text-[#1C2B2D] flex items-start gap-2">
+                <AlertCircle size={14} className="mt-0.5 shrink-0 text-[#F5A623]" />
+                <div className="flex-1">
+                  No clients yet. Add a client first.{" "}
+                  <Link
+                    to="/clients"
+                    data-testid="add-project-add-client-link"
+                    className="font-medium text-[#2B4C3B] underline underline-offset-2"
+                    onClick={onClose}
+                  >
+                    Go to Clients →
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <Select value={form.client_id || ""} onValueChange={(v) => update("client_id", v)}>
+                <SelectTrigger data-testid="add-project-client-select"><SelectValue placeholder="Select client" /></SelectTrigger>
+                <SelectContent>
+                  {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
           </Field>
           <Field label="Work type">
             <Select value={form.work_type} onValueChange={(v) => update("work_type", v)}>
@@ -237,7 +256,12 @@ function AddProjectDialog({ open, onClose, onSaved }) {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button data-testid="add-project-save-btn" disabled={busy || !form.project_name} onClick={submit} className="bg-[#2B4C3B] hover:bg-[#1F382A]">
+          <Button
+            data-testid="add-project-save-btn"
+            disabled={busy || !form.project_name || !form.client_id}
+            onClick={submit}
+            className="bg-[#2B4C3B] hover:bg-[#1F382A]"
+          >
             {busy ? "Saving…" : "Create project"}
           </Button>
         </DialogFooter>

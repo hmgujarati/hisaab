@@ -693,12 +693,15 @@ function EditProjectDialog({ open, project, onClose, onSaved }) {
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const submit = async () => {
+    if (!form.client_id) {
+      toast.error("Please select a client");
+      return;
+    }
     setBusy(true);
     try {
       const payload = {
         ...form,
         original_value: Number(form.original_value) || 0,
-        client_id: form.client_id || null,
         reference_id: form.reference_id || null,
         expected_completion_date: form.expected_completion_date || null,
         start_date: form.start_date || null,
@@ -722,11 +725,10 @@ function EditProjectDialog({ open, project, onClose, onSaved }) {
           <DField label="Project name" req cls="sm:col-span-2">
             <Input data-testid="edit-project-name-input" value={form.project_name} onChange={(e) => update("project_name", e.target.value)} />
           </DField>
-          <DField label="Client">
-            <Select value={form.client_id || "_none"} onValueChange={(v) => update("client_id", v === "_none" ? "" : v)}>
+          <DField label="Client" req>
+            <Select value={form.client_id || ""} onValueChange={(v) => update("client_id", v)}>
               <SelectTrigger data-testid="edit-project-client-select"><SelectValue placeholder="Select client" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="_none">— None —</SelectItem>
                 {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -772,7 +774,7 @@ function EditProjectDialog({ open, project, onClose, onSaved }) {
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button
             data-testid="edit-project-save-btn"
-            disabled={busy || !form.project_name}
+            disabled={busy || !form.project_name || !form.client_id}
             onClick={submit}
             className="bg-[#2B4C3B] hover:bg-[#1F382A]"
           >
