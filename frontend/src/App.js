@@ -1,55 +1,104 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { Toaster } from "sonner";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import LoginPage from "@/pages/LoginPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
+import AdminPanel from "@/pages/admin/AdminPanel";
+import AdminSmtp from "@/pages/admin/AdminSmtp";
+import Layout from "@/components/Layout";
+import Dashboard from "@/pages/business/Dashboard";
+import ProjectsList from "@/pages/business/ProjectsList";
+import ProjectDetail from "@/pages/business/ProjectDetail";
+import ClientsPage from "@/pages/business/ClientsPage";
+import PartiesPage from "@/pages/business/PartiesPage";
+import ReferencesPage from "@/pages/business/ReferencesPage";
+import RemindersPage from "@/pages/business/RemindersPage";
+import ReportsPage from "@/pages/business/ReportsPage";
+import SettingsPage from "@/pages/business/SettingsPage";
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+function Protected({ children, roles }) {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-[#5A6566]">
+        Loading…
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace />;
+  if (roles && !roles.includes(user.role)) {
+    return user.role === "super_admin" ? (
+      <Navigate to="/admin" replace />
+    ) : (
+      <Navigate to="/" replace />
+    );
+  }
+  return children;
+}
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+function RootRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === "super_admin") return <Navigate to="/admin" replace />;
+  return <Navigate to="/dashboard" replace />;
+}
 
 function App() {
   return (
-    <div className="App">
+    <AuthProvider>
       <BrowserRouter>
+        <Toaster position="top-center" richColors />
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+          {/* Super admin */}
+          <Route
+            path="/admin"
+            element={
+              <Protected roles={["super_admin"]}>
+                <AdminPanel />
+              </Protected>
+            }
+          />
+          <Route
+            path="/admin/smtp"
+            element={
+              <Protected roles={["super_admin"]}>
+                <AdminSmtp />
+              </Protected>
+            }
+          />
+
+          {/* Business owner */}
+          <Route
+            element={
+              <Protected roles={["owner", "staff"]}>
+                <Layout />
+              </Protected>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/projects" element={<ProjectsList />} />
+            <Route path="/projects/:id" element={<ProjectDetail />} />
+            <Route path="/clients" element={<ClientsPage />} />
+            <Route path="/parties" element={<PartiesPage />} />
+            <Route path="/references" element={<ReferencesPage />} />
+            <Route path="/reminders" element={<RemindersPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
+
+          <Route path="/" element={<RootRedirect />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
-    </div>
+    </AuthProvider>
   );
 }
 
