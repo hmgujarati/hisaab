@@ -73,64 +73,129 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-[#F5F4F0]">
       <header className="rxt-glass sticky top-0 z-30">
-        <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-[#2B4C3B] grid place-items-center text-white font-display font-semibold">R</div>
-            <div>
-              <div className="font-display text-base font-semibold flex items-center gap-2">
-                Super Admin
-                <span className="text-[10px] uppercase tracking-widest text-white bg-[#2B4C3B] px-2 py-0.5 rounded-full">
+        <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-9 w-9 shrink-0 rounded-lg bg-[#2B4C3B] grid place-items-center text-white font-display font-semibold">R</div>
+            <div className="min-w-0">
+              <div className="font-display text-sm sm:text-base font-semibold flex items-center gap-2">
+                <span className="truncate">Super Admin</span>
+                <span className="hidden sm:inline-flex text-[10px] uppercase tracking-widest text-white bg-[#2B4C3B] px-2 py-0.5 rounded-full items-center">
                   <ShieldCheck size={10} className="inline mr-1" /> Admin
                 </span>
               </div>
-              <div className="text-[11px] text-[#5A6566]">{user?.email}</div>
+              <div className="text-[11px] text-[#5A6566] truncate">{user?.email}</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <InstallPWAButton />
             <Link to="/admin/smtp">
-              <Button variant="outline" size="sm" data-testid="open-smtp-btn">
-                <Mail size={14} className="mr-1.5" /> SMTP Settings
+              <Button variant="outline" size="sm" data-testid="open-smtp-btn" className="px-2 sm:px-3">
+                <Mail size={14} className="sm:mr-1.5" />
+                <span className="hidden sm:inline">SMTP Settings</span>
               </Button>
             </Link>
-            <Button variant="ghost" size="sm" onClick={handleLogout} data-testid="admin-logout-btn">
-              <LogOut size={14} className="mr-1.5" /> Logout
+            <Button variant="ghost" size="sm" onClick={handleLogout} data-testid="admin-logout-btn" className="px-2 sm:px-3">
+              <LogOut size={14} className="sm:mr-1.5" />
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="px-4 sm:px-6 lg:px-8 py-6 animate-in fade-in">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+      <main className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 animate-in fade-in">
+        <div className="flex flex-col gap-4 mb-5 sm:mb-6">
           <div>
             <div className="text-xs uppercase tracking-widest text-[#5A6566]">Customers</div>
-            <h1 className="font-display text-3xl sm:text-4xl font-semibold mt-1">Business Accounts</h1>
-            <p className="text-[#5A6566] mt-1">
+            <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-semibold mt-1">Business Accounts</h1>
+            <p className="text-sm text-[#5A6566] mt-1">
               {items.length} total · {items.filter((b) => b.live_status === "active").length} active
             </p>
           </div>
-          <div className="flex gap-2">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-end">
+            <div className="relative flex-1 sm:flex-initial">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A6566]" />
               <Input
                 data-testid="admin-search-input"
                 placeholder="Search business, owner, email"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                className="pl-9 h-10 w-72 bg-white"
+                className="pl-9 h-10 w-full sm:w-72 bg-white"
               />
             </div>
             <Button
               data-testid="add-customer-btn"
               onClick={() => setAddOpen(true)}
-              className="h-10 bg-[#2B4C3B] hover:bg-[#1F382A]"
+              className="h-10 bg-[#2B4C3B] hover:bg-[#1F382A] w-full sm:w-auto"
             >
               <Plus size={16} className="mr-1.5" /> Add Customer
             </Button>
           </div>
         </div>
 
-        <div className="rxt-card overflow-hidden">
+        {/* Mobile: card list */}
+        <div className="md:hidden space-y-3">
+          {loading ? (
+            <div className="rxt-card p-8 text-center text-sm text-[#5A6566]">Loading…</div>
+          ) : filtered.length === 0 ? (
+            <div className="rxt-card p-10 text-center text-sm text-[#5A6566]">
+              No customers yet. Tap <span className="font-medium text-[#1C2B2D]">Add Customer</span> to get started.
+            </div>
+          ) : (
+            filtered.map((b) => (
+              <div key={b.id} data-testid={`biz-card-${b.id}`} className="rxt-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-display font-semibold text-base text-[#1C2B2D] truncate">{b.business_name}</div>
+                    <div className="text-xs text-[#5A6566] truncate">{b.owner_name} · {b.mobile}</div>
+                    <div className="text-[11px] text-[#5A6566] truncate">{b.email}</div>
+                  </div>
+                  <span className={`shrink-0 inline-block text-[10px] px-2 py-0.5 rounded-full border font-medium capitalize ${STATUS_BADGE[b.live_status] || ""}`}>
+                    {b.live_status}
+                  </span>
+                </div>
+                <div className="mt-3 pt-3 border-t border-[#E2E0D8] grid grid-cols-2 gap-2 text-[11px]">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-[#5A6566]">Plan expiry</div>
+                    <div className="text-[#1C2B2D] mt-0.5">{formatDate(b.plan_expiry_date)}</div>
+                    <div className="text-[#5A6566]">
+                      {b.days_remaining != null
+                        ? b.days_remaining >= 0 ? `${b.days_remaining} days left` : `${-b.days_remaining} days overdue`
+                        : "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-[#5A6566]">Created</div>
+                    <div className="text-[#1C2B2D] mt-0.5">{formatDate(b.created_at)}</div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-[#E2E0D8] flex items-center justify-around">
+                  <IconBtn title="Edit" onClick={() => setEditing(b)} data-testid={`edit-biz-${b.id}`}>
+                    <Pencil size={16} />
+                  </IconBtn>
+                  <IconBtn title="Extend Expiry" onClick={() => setExtending(b)} data-testid={`extend-biz-${b.id}`}>
+                    <CalendarClock size={16} />
+                  </IconBtn>
+                  <IconBtn
+                    title={b.status === "suspended" ? "Activate" : "Suspend"}
+                    onClick={() => handleStatus(b, b.status === "suspended" ? "active" : "suspended")}
+                    data-testid={`toggle-suspend-${b.id}`}
+                  >
+                    <Power size={16} />
+                  </IconBtn>
+                  <IconBtn title="Reset Password" onClick={() => setResetting(b)} data-testid={`reset-pwd-${b.id}`}>
+                    <KeyRound size={16} />
+                  </IconBtn>
+                  <IconBtn title="Delete" onClick={() => setDeleting(b)} data-testid={`delete-biz-${b.id}`} danger>
+                    <Trash2 size={16} />
+                  </IconBtn>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block rxt-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -179,26 +244,26 @@ export default function AdminPanel() {
                       <td className="px-4 py-3 text-[#5A6566]">{formatDate(b.created_at)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1 justify-end">
-                          <IconBtn title="Edit" onClick={() => setEditing(b)} data-testid={`edit-biz-${b.id}`}>
+                          <IconBtn title="Edit" onClick={() => setEditing(b)} data-testid={`edit-biz-desktop-${b.id}`}>
                             <Pencil size={14} />
                           </IconBtn>
-                          <IconBtn title="Extend Expiry" onClick={() => setExtending(b)} data-testid={`extend-biz-${b.id}`}>
+                          <IconBtn title="Extend Expiry" onClick={() => setExtending(b)} data-testid={`extend-biz-desktop-${b.id}`}>
                             <CalendarClock size={14} />
                           </IconBtn>
                           <IconBtn
                             title={b.status === "suspended" ? "Activate" : "Suspend"}
                             onClick={() => handleStatus(b, b.status === "suspended" ? "active" : "suspended")}
-                            data-testid={`toggle-suspend-${b.id}`}
+                            data-testid={`toggle-suspend-desktop-${b.id}`}
                           >
                             <Power size={14} />
                           </IconBtn>
-                          <IconBtn title="Reset Password" onClick={() => setResetting(b)} data-testid={`reset-pwd-${b.id}`}>
+                          <IconBtn title="Reset Password" onClick={() => setResetting(b)} data-testid={`reset-pwd-desktop-${b.id}`}>
                             <KeyRound size={14} />
                           </IconBtn>
                           <IconBtn
                             title="Delete"
                             onClick={() => setDeleting(b)}
-                            data-testid={`delete-biz-${b.id}`}
+                            data-testid={`delete-biz-desktop-${b.id}`}
                             danger
                           >
                             <Trash2 size={14} />

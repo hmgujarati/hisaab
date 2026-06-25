@@ -1,0 +1,33 @@
+{
+  "summary": "Iteration 2 — Mobile responsiveness + PWA install affordance testing. 22/22 frontend checks PASS. Verified: /admin and /admin/smtp on 390x844 mobile have no horizontal scroll; header buttons (SMTP, Logout) collapse to icon-only on mobile and show full text on desktop; customer list renders cards on mobile (biz-card-<id>) and table on desktop (edit-biz-desktop-<id> etc.); full CRUD lifecycle (Add → Extend → Suspend toggle → Reset password → Delete with name confirmation) all working from mobile cards; /admin/smtp h1 is text-2xl (24px) on mobile and text-3xl (30px) on desktop; PWA install-pwa-btn appears in admin header after beforeinstallprompt dispatch; install-pwa-btn renders on iOS UA without the event and opens 3-step Add-to-Home-Screen instructions dialog; manifest.json correct (name, short_name, start_url, theme_color, 3 icons incl. maskable); /sw.js, /icon-192.png, /icon-512.png, /icon-maskable-512.png all return 200. No backend regressions; backend tests unchanged from iter 1 (30/30 still applies — backend untouched).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/iteration_1.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "AdminPanel.jsx is 559 lines and mixes 4 dialog sub-components + the main list view. Consider extracting AddOrEditCustomer, ExtendExpiry, ResetPasswordDlg, DeleteBusinessDlg into /pages/admin/dialogs/ to stay under the 700-line guideline and aid testing.",
+    "InstallPWAButton.jsx: handleClick → promptInstall() doesn't fall back when canInstall is true but the prompt fails/dismisses; for non-installable, non-iOS browsers (e.g., desktop Firefox) the button is silently hidden — acceptable but a single-source 'why is install hidden?' tooltip in Settings would help users.",
+    "usePWAInstall.js correctly listens to 'beforeinstallprompt' and 'appinstalled'; isInstalled state would not update if the user installs in a different tab. Minor.",
+    "Mobile cards lose one piece of info shown on desktop: plan_start_date (only plan_expiry_date is rendered on the card). Acceptable, but worth confirming this is intentional with the product owner.",
+    "Console shows /api/auth/me 401 on unauthenticated page loads (login screen). Cosmetic — consider suppressing the request when no auth cookie is present to keep DevTools clean."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (not re-tested — no backend code changed since iter 1)", "frontend": "100% (22/22 checks)"},
+  "test_credentials": "Super admin: admin@rapidxt.com / Admin@123. Test owners auto-created during run (MobileBiz_<ts>) and cleaned up via the in-flow delete step.",
+  "seed_data_creation": "Created and deleted one ephemeral business MobileBiz_<timestamp> with owner mobile_owner_<ts>@example.com during the mobile CRUD lifecycle test. Net effect: zero residual data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All mobile responsiveness + PWA install requirements from the iteration 2 review request are met. Key working selectors: login-identifier-input / login-password-input / login-submit-btn, admin-logout-btn, open-smtp-btn, add-customer-btn, admin-search-input, biz-card-<id> (mobile), edit-biz-desktop-<id> family (desktop), extend-biz-<id> + extend-date-input + extend-save-btn, toggle-suspend-<id>, reset-pwd-<id> + rp-admin-pwd-input + rp-admin-save-btn, delete-biz-<id> + delete-confirm-input + delete-confirm-btn, install-pwa-btn. For iOS test, use browser.new_context(user_agent='...iPhone...') — overriding via Object.defineProperty on an existing page does not retro-update React state from useEffect since it runs before the override. Backend untouched since iter 1; backend_test.py remains the canonical regression suite.",
+  "rca of the issue": "No bugs found this iteration. (Iter 1 RCA preserved in iteration_1.json.)"
+}

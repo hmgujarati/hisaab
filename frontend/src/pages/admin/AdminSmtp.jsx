@@ -63,9 +63,9 @@ export default function AdminSmtp() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
         <div className="text-xs uppercase tracking-widest text-[#5A6566]">Admin</div>
-        <h1 className="font-display text-3xl font-semibold mt-1">SMTP Settings</h1>
+        <h1 className="font-display text-2xl sm:text-3xl font-semibold mt-1">SMTP Settings</h1>
         <p className="text-[#5A6566] mt-1">
           Used to send password reset emails. Supports Gmail, SendGrid, Zoho, etc.
         </p>
