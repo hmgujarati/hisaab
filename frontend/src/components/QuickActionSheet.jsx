@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, matchPath } from "react-router-dom";
 import { Receipt, Briefcase, Bell, Camera, X, ArrowRight } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import TransactionForm from "@/components/TransactionForm";
@@ -7,9 +7,14 @@ import BillScanner from "@/components/BillScanner";
 
 export default function QuickActionSheet({ open, onClose }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [txOpen, setTxOpen] = useState(false);
   const [txType, setTxType] = useState("received");
   const [scannerOpen, setScannerOpen] = useState(false);
+
+  // Auto-detect the project from the current URL (/projects/:id)
+  const projectMatch = matchPath("/projects/:id", location.pathname);
+  const currentProjectId = projectMatch?.params?.id || "";
 
   const go = (path) => { onClose(); navigate(path); };
 
@@ -61,6 +66,7 @@ export default function QuickActionSheet({ open, onClose }) {
       <TransactionForm
         open={txOpen}
         defaultType={txType}
+        projectId={currentProjectId}
         onClose={() => setTxOpen(false)}
         onSaved={() => setTxOpen(false)}
       />
